@@ -1,0 +1,24 @@
+import commands
+
+raw_temp_data = commands.getoutput("/opt/get_temp.sh | grep 'Notification handle = 0x0024 value:' |cut -d'=' -f2 | cut -d' ' -f4,5,6,7")
+
+f = open('/tmp/debug.txt' , 'w')
+
+print >> f , raw_temp_data
+
+raw_temp_bytes = raw_temp_data.split()
+
+print >> f , raw_temp_bytes
+
+raw_ambient_temp = int( '0x'+ raw_temp_bytes[3]+ raw_temp_bytes[2], 16)
+raw_ir_temp = int( '0x'+ raw_temp_bytes[1]+ raw_temp_bytes[0], 16)
+ambient_temp_int = raw_ambient_temp >> 2 & 0x3FFF
+ambient_temp_celsius = float(ambient_temp_int) * 0.03125
+ambient_temp_fahrenheit = (ambient_temp_celsius * 1.8) + 32
+ir_temp_int = raw_ir_temp >> 2 & 0x3FFF
+ir_temp_celsius = float(ir_temp_int) * 0.03125
+ir_temp_fahrenheit = (ir_temp_celsius * 1.8) + 32
+#print ambient_temp_celsius
+print ir_temp_celsius
+
+f.close()

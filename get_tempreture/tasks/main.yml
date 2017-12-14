@@ -1,0 +1,49 @@
+---
+- name: install dependency
+  apt:
+    name: "{{item}}"
+    state: present
+    update_cache: yes
+  with_items:
+    - expect
+
+- name: Get Bluetooth mac address
+  shell: bash -lc "su -;timeout --signal=SIGINT 5 stdbuf -oL hcitool lescan > /tmp/btlist;grep CC2650 /tmp/btlist | uniq | cut -d' ' -f1"
+  register: _mac_addr
+
+- debug: var=_mac_addr.stdout_lines
+
+- name: Upload shell file
+  template:
+    src: get_temp.sh.j2
+    dest: /opt/get_temp.sh
+    owner: root
+    group: root
+    mode: 0744
+
+- name: Upload Python file
+  template:
+    src: ret_celsius.py.j2
+    dest: /opt/ret_celsius.py
+    owner: root
+    group: root
+    mode: 0744
+
+#- name: get tempreture
+#  shell: bash -lc "/bin/bash /opt/get_temp.sh  > /tmp/tempre"
+#
+#- name: get raw data
+#  shell: bash -lc "cat /tmp/tempre |grep 'Notification handle = 0x0024 value:' | cut -d'=' -f2 | cut -d' ' -f4,5,6,7 > /tmp/raw_temp"
+
+- name: Change to celsius
+  shell: bash -lc "python /opt/ret_celsius.py"
+  register: _result
+
+- debug: var=_result.stdout
+
+- name: Set Crontab 
+  cron:
+    name: ret_celsius.py
+#    job: for i in `seq 0 15 59`;do (sleep ${i} ;python /opt/ret_celsius.py >> /tmp/ir_temp_data) & done;
+    job: for i in `seq 0 15 59`;do (sleep ${i} ; /opt/zabbix_sender -z 172.21.21.6 -s sensor1 -k tempvalue -o `python /opt/ret_celsius.py`) & done;
+    

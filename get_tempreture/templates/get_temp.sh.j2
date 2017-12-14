@@ -1,0 +1,26 @@
+#!/bin/bash
+
+BTMAC={{ _mac_addr.stdout }}
+
+expect <<EOF
+ spawn gatttool -b ${BTMAC}  -I
+ send "connect\n"
+ expect "Connection successful"
+ send "char-write-req 0x27 01\n"
+ expect "Characteristic value was written successfully"
+ send "char-read-hnd 0x27\n"
+ expect "Characteristic value/descriptor:"
+ send "char-write-req 0x25 0100\n"
+ expect "Characteristic value was written successfully"
+ expect "Notification handle"
+ send "\n"
+ send "char-write-req 0x25 0000\n"
+ expect "Characteristic value was written successfully"
+ send "\n"
+ send "char-write-cmd 0x27 00\n"
+ expect "Characteristic value was written successfully"
+ send "quit\n"
+
+EOF
+
+echo "\n"
