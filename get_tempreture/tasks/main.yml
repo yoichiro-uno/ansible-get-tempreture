@@ -29,12 +29,6 @@
     group: root
     mode: 0744
 
-#- name: get tempreture
-#  shell: bash -lc "/bin/bash /opt/get_temp.sh  > /tmp/tempre"
-#
-#- name: get raw data
-#  shell: bash -lc "cat /tmp/tempre |grep 'Notification handle = 0x0024 value:' | cut -d'=' -f2 | cut -d' ' -f4,5,6,7 > /tmp/raw_temp"
-
 - name: Change to celsius
   shell: bash -lc "python /opt/ret_celsius.py"
   register: _result
@@ -44,6 +38,5 @@
 - name: Set Crontab 
   cron:
     name: ret_celsius.py
-#    job: for i in `seq 0 15 59`;do (sleep ${i} ;python /opt/ret_celsius.py >> /tmp/ir_temp_data) & done;
     job: for i in `seq 0 15 59`;do (sleep ${i} ; /opt/zabbix_sender -z 172.21.21.6 -s sensor1 -k tempvalue -o `python /opt/ret_celsius.py`) & done;
     
